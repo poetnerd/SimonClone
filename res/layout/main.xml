@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    
+    >
+    <!-- android:background="@drawable/background_config" -->
+    <com.poetnerd.simonclone.ButtonGridView
+    android:id="@+id/button_grid"
+    android:layout_alignParentTop="true"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content" />
+    
+    <TableLayout android:id="@+id/button_table"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_centerHorizontal="true"
+    android:stretchColumns="1,3"
+    >
+    
+    <TableRow android:layout_gravity="center">
+        <Button
+        android:id="@+id/last"
+        android:background="@drawable/yellow_control"
+        />
+        <TextView  android:layout_gravity="center"
+        android:text=""
+        />
+        <Button
+        android:id="@+id/start"
+        android:background="@drawable/red_control"
+        />
+        <TextView  android:layout_gravity="center"
+        android:text=""
+        />
+        <Button
+        android:id="@+id/longest"
+        android:background="@drawable/yellow_control"
+        />
+        
+    </TableRow>
+    
+        <TableRow android:layout_gravity="center">
+        <TextView  android:layout_gravity="center"
+        android:text="@string/last"
+        />
+        <TextView  android:layout_gravity="center"
+        android:text=""
+        />
+        <TextView  android:layout_gravity="center"
+        android:text="@string/start"
+        />
+         <TextView  android:layout_gravity="center"
+        android:text=""
+        />
+        <TextView  android:layout_gravity="center"
+        android:text="@string/longest"
+        />
+    
+    </TableRow>
+    
+    </TableLayout>
+</RelativeLayout>
