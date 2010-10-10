@@ -84,7 +84,7 @@ public final class SimonClone {
 		longestLength = 0;
 		sequenceLength = 0;
 		sequenceIndex = 0;
-		totalLength = 3;  // Go easy for test.
+		totalLength = 8;  // Go easy for test.
 		beepDuration = 220;
 		mLastUpdate = System.currentTimeMillis();
 		gameMode = IDLE;
