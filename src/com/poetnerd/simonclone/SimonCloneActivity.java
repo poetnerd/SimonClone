@@ -25,14 +25,25 @@ public class SimonCloneActivity extends Activity {
         grid.setSimonCloneModel(model);
 
         Button lastButton = (Button)findViewById(R.id.last);
+        lastButton.setOnClickListener(new OnClickListener() {        	
+        	public void onClick(View v) {
+        		model.playLast();
+        	}
+        });
+
         Button longestButton = (Button)findViewById(R.id.longest);
         longestButton.setOnClickListener(new OnClickListener() {        	
         	public void onClick(View v) {
-        		model.playLongest();
+        		model.gameTest();
         	}
         });
         
         Button startButton = (Button)findViewById(R.id.start);
+        startButton.setOnClickListener(new OnClickListener() {        	
+        	public void onClick(View v) {
+        		model.gameStart();
+        	}
+        });
 
     }
 }
