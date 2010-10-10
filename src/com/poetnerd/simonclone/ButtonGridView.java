@@ -18,6 +18,17 @@ import android.view.View;
  * I wanted.  Ivan points out that one view behaving as a grid of buttons works a lot better
  * for things like musical instruments because the events land where you want them, not in
  * the wrong button (fixed in Froyo but...).
+ * 
+ * The button bitmaps are derrived from the graphics Rich Dellinger did in photoshop for the
+ * Simon Extreme program for the Mac.  (I cut apart the .psd image file he gave as an example.)
+ * That work is licensed under Creative Commons Non Commercial Share Alike:
+ * http://creativecommons.org/licenses/by-nc-sa/1.0-legalcode
+ * The source and binaries are supposed to be available from http://lumacode.com/simon
+ * but that domain name is dead.  I fetched it via the Internet Archive http://web.archive.org
+ * Rich's home page is still active at http://richd.com
+ * 
+ * The Simon Extreme Program, by Rich Dellinger and John Scalo is really cool. It has sophisticated
+ * Graphics and behavior.  It is WELL worth fetching from the Internet Archive and playing with!
  */
 public class ButtonGridView extends View implements SimonClone.Listener {
 
@@ -70,14 +81,14 @@ public class ButtonGridView extends View implements SimonClone.Listener {
 	private void initDrawingInstruments() {
 		Resources resources = getContext().getResources();
 		
-		redOnBitmap = BitmapFactory.decodeResource(resources, R.drawable.red_button_on);
-		redOffBitmap = BitmapFactory.decodeResource(resources, R.drawable.red_3d_off);
-		blueOnBitmap = BitmapFactory.decodeResource(resources, R.drawable.blue_button_on);
-		blueOffBitmap = BitmapFactory.decodeResource(resources, R.drawable.blue_3d_off);
-		greenOnBitmap = BitmapFactory.decodeResource(resources, R.drawable.green_button_on);
-		greenOffBitmap = BitmapFactory.decodeResource(resources, R.drawable.green_3d_off);
-		yellowOnBitmap = BitmapFactory.decodeResource(resources, R.drawable.yellow_button_on);
-		yellowOffBitmap = BitmapFactory.decodeResource(resources, R.drawable.yellow_3d_off);
+		redOnBitmap = BitmapFactory.decodeResource(resources, R.drawable.ex_red_on);
+		redOffBitmap = BitmapFactory.decodeResource(resources, R.drawable.ex_red_off);
+		blueOnBitmap = BitmapFactory.decodeResource(resources, R.drawable.ex_blue_on);
+		blueOffBitmap = BitmapFactory.decodeResource(resources, R.drawable.ex_blue_off);
+		greenOnBitmap = BitmapFactory.decodeResource(resources, R.drawable.ex_green_on);
+		greenOffBitmap = BitmapFactory.decodeResource(resources, R.drawable.ex_green_off);
+		yellowOnBitmap = BitmapFactory.decodeResource(resources, R.drawable.ex_yellow_on);
+		yellowOffBitmap = BitmapFactory.decodeResource(resources, R.drawable.ex_yellow_off);
 	}	
 	
 	public void setSimonCloneModel(SimonClone model) {

@@ -40,6 +40,7 @@ public final class SimonClone {
 	private static final int BLUE_SOUND = 3;
 	private static final int VICTORY_SOUND = 4;
 	private static final int LOSE_SOUND = 5;
+	private static final int SPECIAL_RAZZ = 6;
 	
 	private int[] longestSequence = new int[32];
 	private int[] currentSequence = new int[32];
@@ -62,7 +63,7 @@ public final class SimonClone {
 	
 	private SoundPool soundPool;
 	
-	private int[] soundIds = new int[TOTAL_BUTTONS + 2];  // Add win and lose sounds.
+	private int[] soundIds = new int[TOTAL_BUTTONS + 3];  // Add win, lose and razz sounds.
 	private int speakerStream;
 		
 	public SimonClone(Context context) {
@@ -77,6 +78,8 @@ public final class SimonClone {
 		soundIds[BLUE_SOUND] = soundPool.load(context, R.raw.blue_long, 1);
 		soundIds[VICTORY_SOUND] = soundPool.load(context, R.raw.victory, 1);
 		soundIds[LOSE_SOUND] = soundPool.load(context, R.raw.lose, 1);
+		soundIds[SPECIAL_RAZZ] = soundPool.load(context, R.raw.special_razz, 1);
+
 		
 		longestLength = 0;
 		sequenceLength = 0;
@@ -249,9 +252,11 @@ public final class SimonClone {
 				buttonPressMap[index] = true;
 			
 				switch (gameMode) {
-				case WINNING: 
 				case WON:
 					doStream(soundIds[VICTORY_SOUND]);
+					break;
+				case WINNING:
+					doStream(soundIds[SPECIAL_RAZZ]);
 					break;
 				case LOSING: 
 				case LOST:

@@ -2,7 +2,7 @@
 <resources>
     <string name="hello">Hello World, SimonClone!</string>
     <string name="app_name">SimonClone</string>
-    <string name="last">Last</string>
+    <string name="last">  Last  </string>
     <string name="longest">Longest</string>
     <string name="start">Start</string>
 </resources>
