@@ -22,15 +22,22 @@ public final class SimonClone {
 		void multipleButtonStateChanged();
 	}
 	
+	/* Classes of messages to handle through our Handler. */
+	
+	private static final int UI = 0;
+	private static final int TIMEOUT = 1;
+	
 	/* Game States for controlling action of update. */
 	
 	private static final int IDLE = 0;
 	private static final int LISTENING = 1;
 	private static final int PLAYING = 2;
-	private static final int WINNING = 4;
-	private static final int LOSING = 5;
+	private static final int REPLAYING = 3;
+	private static final int LONG_PLAYING =4;
+	private static final int WINNING = 5;
 	private static final int WON = 6;
-	private static final int LOST = 7;
+	private static final int LOSING = 7;
+	private static final int LOST = 8;
 	
 	/* Names for the sounds we make */
 	
@@ -85,12 +92,18 @@ public final class SimonClone {
 		sequenceLength = 0;
 		sequenceIndex = 0;
 		totalLength = 8;  // Go easy for test.
-		beepDuration = 220;
+		scaleBeepDuration (1);
 		mLastUpdate = System.currentTimeMillis();
 		gameMode = IDLE;
 		isOn = false;
 		doPause = false;
 		
+	}
+	
+	void scaleBeepDuration (int index) {
+		if (index < 6 ) beepDuration = 420;		 // 1 to 5 is .42s
+		else if (index < 14) beepDuration = 320; // 6 to 13 is .32s
+		else beepDuration = 220;				// 14 to 31 is .22s
 	}
 	
 	private UpdateHandler mUpdateHandler = new UpdateHandler();
@@ -99,12 +112,29 @@ public final class SimonClone {
 		
 		@Override
 		public void handleMessage(Message msg) {
-			SimonClone.this.update();
+			switch (msg.what) {
+			case UI: 
+				SimonClone.this.update();
+				break;
+			case TIMEOUT: 
+				SimonClone.this.gameTimeoutLose();
+				break;
+			}
 		}
+		
 		public void sleep(long delayMillis) {
-			this.removeMessages(0);
-			sendMessageDelayed(obtainMessage(0), delayMillis);
+			this.removeMessages(UI);
+			sendMessageDelayed(obtainMessage(UI), delayMillis);
 		}
+	}
+	
+	public void gameSetTimeout() {
+		mUpdateHandler.removeMessages(TIMEOUT);						// Clear any old timeouts.
+		mUpdateHandler.sendEmptyMessageDelayed(TIMEOUT, 3000);   // Set a new 3 second timeout.
+	}
+	
+	public void gameClearTimeout() {
+		mUpdateHandler.removeMessages(TIMEOUT);						// Clear any old timeouts.		
 	}
 	
 	public void update() {
@@ -128,9 +158,10 @@ public final class SimonClone {
 			return;
 		}
 		switch (gameMode) {
-		case PLAYING:  // Normal mode: Play the sequence.
+		case REPLAYING:
+		case PLAYING:  //  Play the current sequence.
 			if (isOn) {
-				doReleaseButton(currentSequence[sequenceIndex]); // Stop previous tone.
+				showButtonRelease(currentSequence[sequenceIndex]); // Stop previous tone.
 				isOn = false;
 				sequenceIndex++;								// Point at next
 				return;
@@ -138,14 +169,31 @@ public final class SimonClone {
 			if (sequenceIndex < sequenceLength) {
 				pressButton(currentSequence[sequenceIndex]);	// Flash and beep current.
 				isOn = true;
-			} else {											// Played all; Listen for buttons.
-				gameMode = LISTENING;
+			} else {											// Played all
+				if (gameMode == PLAYING) {
+					gameMode = LISTENING;	// Either enter play and listen
+					gameSetTimeout();		// Set timeout if we're playing.
+				} else gameMode = IDLE;							// or go to Idle state after replay.
 				sequenceIndex = 0;								// Match on first in sequence.
+			}
+			break;
+		case LONG_PLAYING:  //  Play the current sequence.
+			if (isOn) {
+				showButtonRelease(longestSequence[sequenceIndex]); // Stop previous tone.
+				isOn = false;
+				sequenceIndex++;								// Point at next
+				return;
+			}
+			if (sequenceIndex < longestLength) {
+				pressButton(longestSequence[sequenceIndex]);	// Flash and beep current.
+				isOn = true;
+			} else {											// Played all
+				gameMode = IDLE;
 			}
 			break;
 		case WINNING:
 			if (isOn) {
-				doReleaseButton(currentSequence[sequenceLength - 1]);
+				showButtonRelease(currentSequence[sequenceLength - 1]);
 				isOn = false;
 				gameMode = WON;
 			} else {
@@ -154,13 +202,16 @@ public final class SimonClone {
 			}
 			break;
 		case LOSING:
-			gameMode = LOST;
+			if (isOn) {
+				showButtonRelease(currentSequence[sequenceLength - 1]);
+				isOn = false;
+				gameMode = LOST;
+			} else {
+				pressButton(currentSequence[sequenceLength - 1]);
+				isOn = true;
+			}
 			break;
 		}
-	}
-	
-	public void playLongest() {
-		
 	}
 	
 	public void playCurrent() {
@@ -170,15 +221,36 @@ public final class SimonClone {
 	}
 	
 	public void playLast() {
-		if (gameMode == IDLE) {
-			gameMode = PLAYING;
+		switch (gameMode) {
+		case IDLE:
+		case WON:
+		case LOST:
+			gameMode = REPLAYING;
 			sequenceIndex = 0;
 			update();
+			break;
+		default:
+				return;
+		}
+	}
+	
+	public void playLongest () {
+		switch (gameMode) {
+		case IDLE:
+		case WON:
+		case LOST:
+			gameMode = LONG_PLAYING;
+			sequenceIndex = 0;
+			update();
+			break;
+		default:
+				return;
 		}
 	}
 	
 	public void gameStart() {
 		sequenceLength = 1;
+		scaleBeepDuration (1);
 		currentSequence[0] = RNG.nextInt(4);
 		playCurrent();
 	}
@@ -188,18 +260,37 @@ public final class SimonClone {
 			currentSequence[i] = RNG.nextInt(4);
 		}
 		sequenceLength = 6;
+		scaleBeepDuration (sequenceLength);
 		playCurrent();
+	}
+	
+	public void updateLongest () {
+		if (sequenceLength > longestLength) {
+			for (int i = 0; i < sequenceLength; i++) {
+				longestSequence[i] = currentSequence[i];
+			}
+			longestLength = sequenceLength;
+		}		
 	}
 	
 	public void gameWin() {
 	/*	mLastUpdate = System.currentTimeMillis();
 		doPause = true; */
+		updateLongest ();
 		gameMode = WINNING;
+		update();
+	}
+	
+	public void gameTimeoutLose () {
+		mLastUpdate = System.currentTimeMillis();
+		updateLongest ();
+		gameMode = LOSING;
 		update();
 	}
 	
 	public void gameLose() {
 		mLastUpdate = System.currentTimeMillis();
+		updateLongest ();
 		doPause = true;
 		gameMode = LOSING;
 		update();
@@ -212,11 +303,18 @@ public final class SimonClone {
 		playCurrent();
 	}
 
+	/*
+	 * releaseButton is called by the Touch Handler in response to user cction
+	 * We deal with the work in response to the user action and then we show
+	 * that we have released the button.
+	 */
+	
 	public void releaseButton (int buttonIndex ){
-		doReleaseButton(buttonIndex);
+		showButtonRelease(buttonIndex);
 		mLastUpdate = System.currentTimeMillis();
 
 		if (gameMode != LISTENING) return;		// Only examine values when game is in play.
+		gameSetTimeout();
 		
 		if (sequenceIndex < sequenceLength) {
 			if (currentSequence[sequenceIndex] == buttonIndex)  { // Matched. Continue.
@@ -224,6 +322,7 @@ public final class SimonClone {
 				if (sequenceIndex == sequenceLength) { 
 					if (sequenceLength < totalLength) {  // Add one more.
 						sequenceLength++;
+						scaleBeepDuration (sequenceLength);
 						currentSequence[sequenceIndex] = RNG.nextInt(4);
 						gameCycle();
 					} else {  // Total win!
@@ -237,6 +336,31 @@ public final class SimonClone {
 		
 	}
 	
+	public void showButtonRelease(int index) {
+		if (index >= 0 && index < TOTAL_BUTTONS) {
+			if (buttonPressMap[index] == true) {
+				buttonPressMap[index] = false;
+	
+				switch (gameMode) {
+				case WINNING:
+				case LOSING:
+					break;
+				case LISTENING:
+				case PLAYING:
+					if (speakerStream != 0) {
+						soundPool.stop(speakerStream);
+						speakerStream = 0;
+						break;
+					}
+				}
+				for (Listener listener : listeners) {
+					listener.buttonStateChanged(index);
+				} 
+			}
+		}
+	}
+
+
 	public void doStream (int soundId) {
 		if (soundId != 0) {  // Don't do anything different if our soundID is invalid.
 			if (speakerStream !=0) {  // Stop what we were doing.
@@ -246,7 +370,18 @@ public final class SimonClone {
 		} 
 	}
 	
-	public void pressButton(int index) {
+	/*
+	 * pressButton is called by the Touch Handler in response to user cction
+	 * We deal with the work in response to the user action and then we show
+	 * that we have pressed the button.
+	 */
+	
+	public void pressButton (int index)  {
+		gameClearTimeout();
+		showButtonPress(index);
+	}
+	
+	public void showButtonPress(int index) {
 		if (index >= 0 && index < TOTAL_BUTTONS) {
 			if (buttonPressMap[index] == false) {
 				buttonPressMap[index] = true;
@@ -272,30 +407,6 @@ public final class SimonClone {
 				for (Listener listener : listeners) {
 					listener.buttonStateChanged(index); 
 				}  
-			}
-		}
-	}
-	
-	public void doReleaseButton(int index) {
-		if (index >= 0 && index < TOTAL_BUTTONS) {
-			if (buttonPressMap[index] == true) {
-				buttonPressMap[index] = false;
-
-				switch (gameMode) {
-				case WINNING:
-				case LOSING:
-					break;
-				case LISTENING:
-				case PLAYING:
-					if (speakerStream != 0) {
-						soundPool.stop(speakerStream);
-						speakerStream = 0;
-						break;
-					}
-				}
-				for (Listener listener : listeners) {
-					listener.buttonStateChanged(index);
-				} 
 			}
 		}
 	}

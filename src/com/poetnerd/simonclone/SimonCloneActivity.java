@@ -34,7 +34,7 @@ public class SimonCloneActivity extends Activity {
         Button longestButton = (Button)findViewById(R.id.longest);
         longestButton.setOnClickListener(new OnClickListener() {        	
         	public void onClick(View v) {
-        		model.gameTest();
+        		model.playLongest();
         	}
         });
         
