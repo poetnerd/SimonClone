@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import android.os.SystemClock;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import android.content.Context;
 import android.media.AudioManager;
@@ -22,6 +22,8 @@ public final class SimonClone {
 		void multipleButtonStateChanged();
 	}
 	
+	private static final String TAG = "Simon Clone Class";
+		
 	/* Classes of messages to handle through our Handler. */
 	
 	private static final int UI = 0;
@@ -33,7 +35,7 @@ public final class SimonClone {
 	private static final int LISTENING = 1;
 	private static final int PLAYING = 2;
 	private static final int REPLAYING = 3;
-	private static final int LONG_PLAYING =4;
+	private static final int LONG_PLAYING = 4;
 	private static final int WINNING = 5;
 	private static final int WON = 6;
 	private static final int LOSING = 7;
@@ -59,10 +61,12 @@ public final class SimonClone {
 	private long beepDuration;
 	private long mLastUpdate;
 	private int gameMode;
+	private int winToneIndex;
 	
 	private static final Random RNG = new Random();
 	private boolean isOn;
-	private boolean doPause;
+	private boolean heardButtonPress;  // Avoid a race of: down -> listen -> up.
+	private long pauseDuration;
 	
 	private boolean[] buttonPressMap = new boolean[TOTAL_BUTTONS];
 	
@@ -91,12 +95,14 @@ public final class SimonClone {
 		longestLength = 0;
 		sequenceLength = 0;
 		sequenceIndex = 0;
-		totalLength = 8;  // Go easy for test.
+		totalLength = 4;  // Go easy for test.
 		scaleBeepDuration (1);
 		mLastUpdate = System.currentTimeMillis();
 		gameMode = IDLE;
 		isOn = false;
-		doPause = false;
+		heardButtonPress = false;
+		pauseDuration = 0;
+		winToneIndex = 0;
 		
 	}
 	
@@ -140,8 +146,13 @@ public final class SimonClone {
 	public void update() {
 		long now = System.currentTimeMillis();
 		long delay = beepDuration;	// Events are normally the length of a beep.
-		if (isOn) delay = 50;   // 50ms to turn off a lit light.
-		if (doPause) delay = 800; // Long delays should only happen when light is off.
+		if (isOn) delay = 50;   // delay 50ms after turning off a lit light.
+		if (gameMode == WINNING) {
+			if (winToneIndex == 0) delay = 20; // First beep duration is .02 s.
+			else delay = 70;		// Subsequent beeps are .07 s.
+			if (isOn) delay = 20;	// and delay .02 s. between tones.
+		}
+		if (pauseDuration > 0) delay = pauseDuration; // Long delays should only happen when light is off.
 		if (gameMode != LISTENING) {
 			if (now - mLastUpdate > delay) {
 				playNext();
@@ -153,28 +164,32 @@ public final class SimonClone {
 	
 	
 	public void playNext() {
-		if (doPause) { 									// OK, we've delayed.
-			doPause = false; 
+		if (pauseDuration > 0) { 									// OK, we've delayed.
+			pauseDuration = 0; 
 			return;
 		}
 		switch (gameMode) {
 		case REPLAYING:
 		case PLAYING:  //  Play the current sequence.
-			if (isOn) {
+			if (sequenceIndex < sequenceLength) {	// Keep playing
+				if (isOn) {
+					showButtonRelease(currentSequence[sequenceIndex]); // Stop previous tone.
+					isOn = false;
+					sequenceIndex++;								// Point at next
+					return;
+				} else {
+					showButtonPress(currentSequence[sequenceIndex]);	// Flash and beep current.
+					isOn = true;
+				}
+			} else {			// We just flashed the last one.
 				showButtonRelease(currentSequence[sequenceIndex]); // Stop previous tone.
 				isOn = false;
-				sequenceIndex++;								// Point at next
-				return;
-			}
-			if (sequenceIndex < sequenceLength) {
-				showButtonPress(currentSequence[sequenceIndex]);	// Flash and beep current.
-				isOn = true;
-			} else {											// Played all
-				if (gameMode == PLAYING) {
-					gameMode = LISTENING;	// Either enter play and listen
-					gameSetTimeout();		// Set timeout if we're playing.
+				if (gameMode == PLAYING) {		// If we're playing begin listening for input.
+					gameSetTimeout();			
+					sequenceIndex = 0;			// Now use sequenceIndex as match cursor.
+					Log.d(TAG, "Started Listening");
+					gameMode = LISTENING;					/* gameMode = SET_LISTEN;	// switch to Listen when button release feedback is done. */
 				} else gameMode = IDLE;							// or go to Idle state after replay.
-				sequenceIndex = 0;								// Match on first in sequence.
 			}
 			break;
 		case LONG_PLAYING:  //  Play the current sequence.
@@ -195,10 +210,11 @@ public final class SimonClone {
 			if (isOn) {
 				showButtonRelease(currentSequence[sequenceLength - 1]);
 				isOn = false;
-				gameMode = WON;
+				if (winToneIndex == 6) gameMode = WON;
 			} else {
-				pressButton(currentSequence[sequenceLength - 1]);
+				showButtonPress(currentSequence[sequenceLength - 1]);
 				isOn = true;
+				winToneIndex++;
 			}
 			break;
 		case LOSING:
@@ -253,6 +269,7 @@ public final class SimonClone {
 	
 	public void gameStart() {
 		sequenceLength = 1;
+		winToneIndex = 0;
 		scaleBeepDuration (1);
 		currentSequence[0] = RNG.nextInt(4);
 		playCurrent();
@@ -277,8 +294,8 @@ public final class SimonClone {
 	}
 	
 	public void gameWin() {
-	/*	mLastUpdate = System.currentTimeMillis();
-		doPause = true; */
+		mLastUpdate = System.currentTimeMillis();
+		pauseDuration = 800;		// We play the winning tone .8 s. after win.
 		gameMode = WINNING;
 		update();
 	}
@@ -291,9 +308,30 @@ public final class SimonClone {
 	
 	public void gameCycle() {
 		mLastUpdate = System.currentTimeMillis();
-		doPause = true;
+		pauseDuration = 800;		// Wait .8s after last key pressed to play next.
 		update();
 		playCurrent();
+	}
+
+	/*
+	 * pressButton is called by the Touch Handler in response to user cction
+	 * We deal with the work in response to the user action and then we show
+	 * that we have pressed the button.
+	 */
+	
+	public void pressButton (int buttonIndex)  {
+		if (gameMode != LISTENING) return;		// Only examine values when game is in play.
+		// Guard against entering LISTENING state between a press and a release.
+		heardButtonPress = true;
+		if (currentSequence[sequenceIndex] == buttonIndex) {	// showButton only if match.
+			maintainLongest();
+			showButtonPress(buttonIndex);
+		}
+		else {
+			gameClearTimeout();					// showButton Press would have done this for us.
+			doStream(soundIds[LOSE_SOUND]);
+			gameLose();
+		}
 	}
 
 	/*
@@ -302,10 +340,46 @@ public final class SimonClone {
 	 * that we have released the button.
 	 */
 	
-	public void releaseButton (int buttonIndex ){
-		mLastUpdate = System.currentTimeMillis();
+	public void showButtonPress(int index) {
+		gameClearTimeout();		// The real game has a cheat:  Timeout is suspended while pressing button.
+		if (index >= 0 && index < TOTAL_BUTTONS) {
+			if (buttonPressMap[index] == false) {
+				buttonPressMap[index] = true;
+			
+				switch (gameMode) {
+				case WON:
+					doStream(soundIds[VICTORY_SOUND]);
+					break;
+				case WINNING:
+					doStream(soundIds[RED_SOUND]);  // Play the red sound for win.
+					break;
+				case LOSING: 
+					doStream(soundIds[LOSE_SOUND]);
+					return;
+				case LOST:
+					doStream(soundIds[LOSE_SOUND]);
+					break;
+				default: 
+					if (currentSequence[sequenceIndex] == index) // When we miss we barf immediately
+						doStream(soundIds[index]);
+					else
+						doStream(soundIds[LOSE_SOUND]);
+					break;
+				}
+				for (Listener listener : listeners) {
+					listener.buttonStateChanged(index); 
+				}  
+			}
+		}
+	}
 
-		if (gameMode != LISTENING) return;		// Only examine values when game is in play.
+	public void releaseButton (int buttonIndex ){
+		if (gameMode != LISTENING) return;
+		// Guard against acting on a button press that happened before we were LISTENING.
+		if (heardButtonPress == false) return;
+
+		heardButtonPress = false;			// Reset our heardButtonPress state.
+		mLastUpdate = System.currentTimeMillis();
 		gameSetTimeout();
 		
 		if (sequenceIndex < sequenceLength) {
@@ -363,59 +437,6 @@ public final class SimonClone {
 			}
 			speakerStream = soundPool.play(soundId, 1.0f, 1.0f, 0, 0, 1.0f);
 		} 
-	}
-	
-	/*
-	 * pressButton is called by the Touch Handler in response to user cction
-	 * We deal with the work in response to the user action and then we show
-	 * that we have pressed the button.
-	 */
-	
-	public void pressButton (int index)  {
-		if (gameMode != LISTENING) return;		// Only examine values when game is in play.
-		
-		if (currentSequence[sequenceIndex] == index) {	// showButton only if match.
-			maintainLongest();
-			showButtonPress(index);
-		}
-		else {
-			gameClearTimeout();					// showButton Press would have done this for us.
-			doStream(soundIds[LOSE_SOUND]);
-			gameLose();
-		}
-	}
-	
-	public void showButtonPress(int index) {
-		gameClearTimeout();
-		if (index >= 0 && index < TOTAL_BUTTONS) {
-			if (buttonPressMap[index] == false) {
-				buttonPressMap[index] = true;
-			
-				switch (gameMode) {
-				case WON:
-					doStream(soundIds[VICTORY_SOUND]);
-					break;
-				case WINNING:
-					doStream(soundIds[SPECIAL_RAZZ]);
-					break;
-				case LOSING: 
-					doStream(soundIds[LOSE_SOUND]);
-					return;
-				case LOST:
-					doStream(soundIds[LOSE_SOUND]);
-					break;
-				default: 
-					if (currentSequence[sequenceIndex] == index) // When we miss we barf immediately
-						doStream(soundIds[index]);
-					else
-						doStream(soundIds[LOSE_SOUND]);
-					break;
-				}
-				for (Listener listener : listeners) {
-					listener.buttonStateChanged(index); 
-				}  
-			}
-		}
 	}
 	
 	public boolean isButtonPressed(int index) {
