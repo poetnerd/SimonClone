@@ -153,6 +153,7 @@ public final class SimonClone {
 			if (isOn) delay = 20;	// and delay .02 s. between tones.
 		}
 		if (pauseDuration > 0) delay = pauseDuration; // Long delays should only happen when light is off.
+
 		if (gameMode != LISTENING) {
 			if (now - mLastUpdate > delay) {
 				playNext();
@@ -176,21 +177,18 @@ public final class SimonClone {
 					showButtonRelease(currentSequence[sequenceIndex]); // Stop previous tone.
 					isOn = false;
 					sequenceIndex++;								// Point at next
-					return;
+					if (sequenceIndex == sequenceLength) { // Played last tone.
+						if (gameMode == PLAYING) {		// If we're playing begin listening for input.
+							gameSetTimeout();			
+							sequenceIndex = 0;			// Now use sequenceIndex as match cursor.
+							gameMode = LISTENING;					/* gameMode = SET_LISTEN;	// switch to Listen when button release feedback is done. */
+						} else gameMode = IDLE;							// or go to Idle state after replay.
+					}
 				} else {
 					showButtonPress(currentSequence[sequenceIndex]);	// Flash and beep current.
 					isOn = true;
 				}
-			} else {			// We just flashed the last one.
-				showButtonRelease(currentSequence[sequenceIndex]); // Stop previous tone.
-				isOn = false;
-				if (gameMode == PLAYING) {		// If we're playing begin listening for input.
-					gameSetTimeout();			
-					sequenceIndex = 0;			// Now use sequenceIndex as match cursor.
-					Log.d(TAG, "Started Listening");
-					gameMode = LISTENING;					/* gameMode = SET_LISTEN;	// switch to Listen when button release feedback is done. */
-				} else gameMode = IDLE;							// or go to Idle state after replay.
-			}
+			} // Fall through and do nothing if we're past the end of the sequence.
 			break;
 		case LONG_PLAYING:  //  Play the current sequence.
 			if (isOn) {
