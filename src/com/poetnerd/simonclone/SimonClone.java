@@ -344,14 +344,14 @@ public final class SimonClone {
 				case LOSING: 
 					doStream(soundIds[LOSE_SOUND]);
 					return;
-				case LOST:
-					doStream(soundIds[LOSE_SOUND]);
-					break;
-				default: 
+				case LISTENING: 
 					if (currentSequence[sequenceIndex] == index) // When we miss we barf immediately
 						doStream(soundIds[index]);
 					else
 						doStream(soundIds[LOSE_SOUND]);
+					break;
+				default: 
+					doStream(soundIds[index]);
 					break;
 				}
 				for (Listener listener : listeners) {
