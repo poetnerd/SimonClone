@@ -117,7 +117,7 @@ public final class SimonClone {
 				SimonClone.this.update();
 				break;
 			case TIMEOUT: 
-				SimonClone.this.gameTimeoutLose();
+				SimonClone.this.gameLose();
 				break;
 			}
 		}
@@ -167,7 +167,7 @@ public final class SimonClone {
 				return;
 			}
 			if (sequenceIndex < sequenceLength) {
-				pressButton(currentSequence[sequenceIndex]);	// Flash and beep current.
+				showButtonPress(currentSequence[sequenceIndex]);	// Flash and beep current.
 				isOn = true;
 			} else {											// Played all
 				if (gameMode == PLAYING) {
@@ -185,7 +185,7 @@ public final class SimonClone {
 				return;
 			}
 			if (sequenceIndex < longestLength) {
-				pressButton(longestSequence[sequenceIndex]);	// Flash and beep current.
+				showButtonPress(longestSequence[sequenceIndex]);	// Flash and beep current.
 				isOn = true;
 			} else {											// Played all
 				gameMode = IDLE;
@@ -202,14 +202,17 @@ public final class SimonClone {
 			}
 			break;
 		case LOSING:
+			/*
 			if (isOn) {
 				showButtonRelease(currentSequence[sequenceLength - 1]);
 				isOn = false;
 				gameMode = LOST;
 			} else {
-				pressButton(currentSequence[sequenceLength - 1]);
+				showButtonPress(currentSequence[sequenceLength - 1]);
 				isOn = true;
 			}
+			*/
+			gameMode = LOST;
 			break;
 		}
 	}
@@ -264,7 +267,7 @@ public final class SimonClone {
 		playCurrent();
 	}
 	
-	public void updateLongest () {
+	public void maintainLongest () {
 		if (sequenceLength > longestLength) {
 			for (int i = 0; i < sequenceLength; i++) {
 				longestSequence[i] = currentSequence[i];
@@ -276,22 +279,12 @@ public final class SimonClone {
 	public void gameWin() {
 	/*	mLastUpdate = System.currentTimeMillis();
 		doPause = true; */
-		updateLongest ();
 		gameMode = WINNING;
 		update();
 	}
 	
-	public void gameTimeoutLose () {
-		mLastUpdate = System.currentTimeMillis();
-		updateLongest ();
-		gameMode = LOSING;
-		update();
-	}
-	
 	public void gameLose() {
-		mLastUpdate = System.currentTimeMillis();
-		updateLongest ();
-		doPause = true;
+		doStream(soundIds[LOSE_SOUND]);
 		gameMode = LOSING;
 		update();
 	}
@@ -310,7 +303,6 @@ public final class SimonClone {
 	 */
 	
 	public void releaseButton (int buttonIndex ){
-		showButtonRelease(buttonIndex);
 		mLastUpdate = System.currentTimeMillis();
 
 		if (gameMode != LISTENING) return;		// Only examine values when game is in play.
@@ -318,6 +310,7 @@ public final class SimonClone {
 		
 		if (sequenceIndex < sequenceLength) {
 			if (currentSequence[sequenceIndex] == buttonIndex)  { // Matched. Continue.
+				showButtonRelease(buttonIndex);			// showButton only if match.
 				sequenceIndex++;
 				if (sequenceIndex == sequenceLength) { 
 					if (sequenceLength < totalLength) {  // Add one more.
@@ -340,18 +333,20 @@ public final class SimonClone {
 		if (index >= 0 && index < TOTAL_BUTTONS) {
 			if (buttonPressMap[index] == true) {
 				buttonPressMap[index] = false;
-	
+/*	
 				switch (gameMode) {
 				case WINNING:
-				case LOSING:
 					break;
+				case LOSING:
 				case LISTENING:
 				case PLAYING:
+				case LOST:
+				*/
 					if (speakerStream != 0) {
 						soundPool.stop(speakerStream);
 						speakerStream = 0;
-						break;
-					}
+/*						break;
+					} */
 				}
 				for (Listener listener : listeners) {
 					listener.buttonStateChanged(index);
@@ -377,11 +372,21 @@ public final class SimonClone {
 	 */
 	
 	public void pressButton (int index)  {
-		gameClearTimeout();
-		showButtonPress(index);
+		if (gameMode != LISTENING) return;		// Only examine values when game is in play.
+		
+		if (currentSequence[sequenceIndex] == index) {	// showButton only if match.
+			maintainLongest();
+			showButtonPress(index);
+		}
+		else {
+			gameClearTimeout();					// showButton Press would have done this for us.
+			doStream(soundIds[LOSE_SOUND]);
+			gameLose();
+		}
 	}
 	
 	public void showButtonPress(int index) {
+		gameClearTimeout();
 		if (index >= 0 && index < TOTAL_BUTTONS) {
 			if (buttonPressMap[index] == false) {
 				buttonPressMap[index] = true;
@@ -394,6 +399,8 @@ public final class SimonClone {
 					doStream(soundIds[SPECIAL_RAZZ]);
 					break;
 				case LOSING: 
+					doStream(soundIds[LOSE_SOUND]);
+					return;
 				case LOST:
 					doStream(soundIds[LOSE_SOUND]);
 					break;
