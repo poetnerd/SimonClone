@@ -146,8 +146,8 @@ public final class SimonClone {
 	public void update() {
 		long now = System.currentTimeMillis();
 		long delay = beepDuration;	// Events are normally the length of a beep.
-		if (isOn) delay = 50;   // delay 50ms after turning off a lit light.
-		if (gameMode == WINNING) {
+		if (isOn) delay = 50;   // Usually delay 50ms after turning off a lit light.
+		if (gameMode == WINNING) {  // Special delays when playing winning tone sequence.
 			if (winToneIndex == 0) delay = 20; // First beep duration is .02 s.
 			else delay = 70;		// Subsequent beeps are .07 s.
 			if (isOn) delay = 20;	// and delay .02 s. between tones.
@@ -216,16 +216,6 @@ public final class SimonClone {
 			}
 			break;
 		case LOSING:
-			/*
-			if (isOn) {
-				showButtonRelease(currentSequence[sequenceLength - 1]);
-				isOn = false;
-				gameMode = LOST;
-			} else {
-				showButtonPress(currentSequence[sequenceLength - 1]);
-				isOn = true;
-			}
-			*/
 			gameMode = LOST;
 			break;
 		}
@@ -405,20 +395,9 @@ public final class SimonClone {
 		if (index >= 0 && index < TOTAL_BUTTONS) {
 			if (buttonPressMap[index] == true) {
 				buttonPressMap[index] = false;
-/*	
-				switch (gameMode) {
-				case WINNING:
-					break;
-				case LOSING:
-				case LISTENING:
-				case PLAYING:
-				case LOST:
-				*/
 					if (speakerStream != 0) {
 						soundPool.stop(speakerStream);
 						speakerStream = 0;
-/*						break;
-					} */
 				}
 				for (Listener listener : listeners) {
 					listener.buttonStateChanged(index);
