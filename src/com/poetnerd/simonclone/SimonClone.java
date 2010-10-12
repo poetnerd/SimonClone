@@ -62,6 +62,7 @@ public final class SimonClone {
 	private long mLastUpdate;
 	private int gameMode;
 	private int winToneIndex;
+	private int theGame;
 	
 	private static final Random RNG = new Random();
 	private boolean isOn;
@@ -103,6 +104,7 @@ public final class SimonClone {
 		heardButtonPress = false;
 		pauseDuration = 0;
 		winToneIndex = 0;
+		theGame = 1;
 		
 	}
 	
@@ -132,6 +134,30 @@ public final class SimonClone {
 			this.removeMessages(UI);
 			sendMessageDelayed(obtainMessage(UI), delayMillis);
 		}
+	}
+	
+	public void setLevel(int level) {
+		switch (level) {
+		case 0:
+			totalLength = 8;
+			break;
+		case 1:
+			totalLength = 14;
+			break;
+		case 2:
+			totalLength = 20;
+			break;
+		case 3:
+			totalLength = 30;
+			break;
+		default:
+			totalLength = 4; 	// Should never get here.
+			break;
+		}
+	}
+	
+	public void setGame(int level) {
+		theGame = level;
 	}
 	
 	public void gameSetTimeout() {

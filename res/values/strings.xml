@@ -2,7 +2,25 @@
 <resources>
     <string name="hello">Hello World, SimonClone!</string>
     <string name="app_name">SimonClone</string>
-    <string name="last">  Last  </string>
+    <string name="last">Last</string>
     <string name="longest">Longest</string>
     <string name="start">Start</string>
+    <string name="game">Game:</string>
+    <string name="level">Level:</string>
+    <string name="set_game">Set Game</string>
+    <string name="set_level">Set Level</string>
+    <string name="about">About this App</string>   
+    <string name="long_about">This app was built by Bill Cattey but builds on work from many sources.</string>
+    <string-array name="level_choices">
+        <item>Level 1: Remember 8</item>
+        <item>Level 2: Remember 14</item>
+        <item>Level 3: Remember 20</item>
+        <item>Level 4: Remember 31</item>
+    </string-array>
+    <string-array name="game_choices">
+        <item>Game 1: Single Player</item>
+        <item>Game 2: Multi Player</item>
+        <item>Game 3: Multi Player</item>
+    </string-array>
+    <string name="ok">OK</string>
 </resources>
