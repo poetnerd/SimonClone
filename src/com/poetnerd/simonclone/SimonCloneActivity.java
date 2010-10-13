@@ -100,7 +100,7 @@ public class SimonCloneActivity extends Activity {
     		builder.setTitle(R.string.set_game);
             builder.setSingleChoiceItems(R.array.game_choices, 0, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
-                	model.setGame(whichButton);
+                	model.setGame(whichButton + 1);
                 	gameDisplay.setText(String.valueOf(whichButton + 1));
                 }
             });
