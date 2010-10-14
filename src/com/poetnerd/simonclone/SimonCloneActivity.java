@@ -25,6 +25,8 @@ import android.widget.Toast;
 
 import android.content.DialogInterface;
 
+import android.media.AudioManager;
+
 public class SimonCloneActivity extends Activity {
 	@SuppressWarnings("unused")
 	private static final String TAG = SimonCloneActivity.class.getSimpleName();
@@ -76,6 +78,9 @@ public class SimonCloneActivity extends Activity {
         		model.gameStart();
         	}
         });
+        
+        /* Change the default vol control of app to what is SHOULD be. */
+        this.setVolumeControlStream(AudioManager.STREAM_MUSIC);  
         
         // After all initialization, we set up our save/restore InstanceState Bundle.
         if (savedInstanceState == null) {		// Just launched.  Set initial state.
