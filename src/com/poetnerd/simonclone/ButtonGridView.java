@@ -19,7 +19,7 @@ import android.view.View;
  * for things like musical instruments because the events land where you want them, not in
  * the wrong button (fixed in Froyo but...).
  * 
- * The button bitmaps are derrived from the graphics Rich Dellinger did in photoshop for the
+ * The button bitmaps are derived from the graphics Rich Dellinger did in photoshop for the
  * Simon Extreme program for the Mac.  (I cut apart the .psd image file he gave as an example.)
  * That work is licensed under Creative Commons Non Commercial Share Alike:
  * http://creativecommons.org/licenses/by-nc-sa/1.0-legalcode

@@ -4,15 +4,25 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+
 import android.os.Bundle;
+
+import android.util.Log;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
 import android.view.View.OnClickListener;
+
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import android.content.DialogInterface;
 
 public class SimonCloneActivity extends Activity {
@@ -21,11 +31,13 @@ public class SimonCloneActivity extends Activity {
 	
 	private static final int LEVEL_DIALOG = 1;
 	private static final int GAME_DIALOG = 2;
+	private static final int ABOUT_DIALOG = 3;
 	
 	private SimonClone model;
 	private Menu mMenu;
 	private AlertDialog levelDialog;
 	private AlertDialog gameDialog;
+	private AlertDialog aboutDialog;
 	private TextView levelDisplay;
 	private TextView gameDisplay;
 	
@@ -64,7 +76,25 @@ public class SimonCloneActivity extends Activity {
         		model.gameStart();
         	}
         });
-
+        
+        // After all initialization, we set up our save/restore InstanceState Bundle.
+        if (savedInstanceState == null) {		// Just launched.  Set initial state.
+        	Log.d(TAG, "Initializing");
+        	SharedPreferences settings = getPreferences (0); // Private mode by default.
+        	model.setLevel(settings.getInt(SimonClone.KEY_GAME_LEVEL, 1));	// Game Level
+        	model.setGame(settings.getInt(SimonClone.KEY_THE_GAME, 1)); 	// The Game
+        	model.setLongest(settings.getString(SimonClone.KEY_LONGEST_SEQUENCE, "")); 	// String Rep of Longest
+        	levelDisplay.setText(String.valueOf(model.getLevel()));
+        	gameDisplay.setText(String.valueOf(model.getGame()));
+        } else {
+        	model.restoreState(savedInstanceState);
+        }
+    }
+        
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+    	super.onSaveInstanceState(outState);
+    	model.saveState(outState);
     }
     
     @Override
@@ -76,15 +106,28 @@ public class SimonCloneActivity extends Activity {
     }
     
     @Override
+    protected void onStop () {
+    	super.onStop();
+    	SharedPreferences settings = getPreferences (0); // Private mode by default.
+    	SharedPreferences.Editor editor = settings.edit();
+    	
+    	editor.putInt(SimonClone.KEY_GAME_LEVEL, model.getLevel());	// Game Level
+    	editor.putInt(SimonClone.KEY_THE_GAME, model.getGame());	// The Game
+    	editor.putString(SimonClone.KEY_LONGEST_SEQUENCE, model.getLongest());	// Longest match
+
+    	editor.commit();
+    }
+    
+    @Override
     protected Dialog onCreateDialog(int id) {
     	AlertDialog.Builder builder;
     	switch (id) {
     	case LEVEL_DIALOG:
     		builder = new AlertDialog.Builder(this);
     		builder.setTitle(R.string.set_level);
-            builder.setSingleChoiceItems(R.array.level_choices, 0, new DialogInterface.OnClickListener() {
+            builder.setSingleChoiceItems(R.array.level_choices, model.getLevel() - 1, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
-                	model.setLevel(whichButton);
+                	model.setLevel(whichButton + 1);
                 	levelDisplay.setText(String.valueOf(whichButton + 1));
                 }
             });
@@ -98,7 +141,7 @@ public class SimonCloneActivity extends Activity {
     	case GAME_DIALOG:
     		builder = new AlertDialog.Builder(this);
     		builder.setTitle(R.string.set_game);
-            builder.setSingleChoiceItems(R.array.game_choices, 0, new DialogInterface.OnClickListener() {
+            builder.setSingleChoiceItems(R.array.game_choices, model.getGame() - 1, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
                 	model.setGame(whichButton + 1);
                 	gameDisplay.setText(String.valueOf(whichButton + 1));
@@ -111,6 +154,17 @@ public class SimonCloneActivity extends Activity {
             });
             gameDialog = builder.create();
             return gameDialog;
+    	case ABOUT_DIALOG:
+    		builder = new AlertDialog.Builder(this);
+    		builder.setTitle(R.string.about);
+    		builder.setMessage(R.string.long_about);
+            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+                	aboutDialog.dismiss();
+                }
+            });
+            aboutDialog = builder.create();
+            return aboutDialog;
     	default: return null;
     	}
     }
@@ -125,6 +179,10 @@ public class SimonCloneActivity extends Activity {
         case R.id.set_game:
         	showDialog(GAME_DIALOG);
         	return true;
+        case R.id.about:
+        	showDialog(ABOUT_DIALOG);
+        case R.id.clear_longest:
+        	model.setLongest("");
         }
         return false;
     }

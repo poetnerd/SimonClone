@@ -10,7 +10,22 @@
     <string name="set_game">Set Game</string>
     <string name="set_level">Set Level</string>
     <string name="about">About this App</string>   
-    <string name="long_about">This app was built by Bill Cattey but builds on work from many sources.</string>
+    <string name="clear_longest">Clear Longest</string>
+    <string name="long_about">This app was built by Bill Cattey but builds on work from many sources.
+The ButtonGridView comes from a Tutorial by Ivan Memruk appearing on his blog, "Mind the Robot."
+See: "Android BeatzL: Making a Drum Machine App"
+at: http://mindtherobot.com/blog/420/android-beatz-making-a-drum-machine-app/
+The button bitmaps are derived from the graphics Rich Dellinger did in photoshop for the
+Simon Extreme program for the Mac.  (I cut apart the .psd image file he gave as an example.)
+That work is licensed under Creative Commons Non Commercial Share Alike:
+http://creativecommons.org/licenses/by-nc-sa/1.0-legalcode
+I was able to achieve the xtremely accurate mimic of the Simon game behavior because of the
+extremely detailed reverse engineering done by Simon Inns documented on his website at:
+http://www.waitingforfriday.com/index.php/Reverse_engineering_an_MB_Electronic_Simon_game
+And of course, the game itself, its design layout and action are properly credited to
+Milton Bradley / Hasbro which owns the game, and to the genius of Ralph Baer who conceived of
+and implemented the game.  See: http://www.dieterkoenig.at/ccc/english/se_story_simon.htm
+</string>
     <string-array name="level_choices">
         <item>Level 1: Remember 8</item>
         <item>Level 2: Remember 14</item>
@@ -23,4 +38,5 @@
         <item>Game 3: Multi Player</item>
     </string-array>
     <string name="ok">OK</string>
+
 </resources>

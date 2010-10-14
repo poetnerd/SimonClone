@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
 import android.content.Context;
+
 import android.media.AudioManager;
 import android.media.SoundPool;
 
@@ -42,6 +44,7 @@ public final class SimonClone {
 	private static final int WON = 6;
 	private static final int LOSING = 7;
 	private static final int LOST = 8;
+	private static final int PAUSED = 9;
 	
 	/* Names for the sounds we make */
 	
@@ -52,6 +55,25 @@ public final class SimonClone {
 	private static final int VICTORY_SOUND = 4;
 	private static final int LOSE_SOUND = 5;
 	private static final int SPECIAL_RAZZ = 6;
+	
+	/* Keys for save and restore of game state */
+	public static final String KEY_THE_GAME = "theGame";
+	public static final String KEY_GAME_LEVEL = "gameLevel";
+	public static final String KEY_LONGEST_SEQUENCE = "longestSequence";
+	
+	private static final String KEY_LONGEST_LENGTH = "longestLength";
+	private static final String KEY_SEQUENCE_LENGTH = "sequenceLength";
+	private static final String KEY_SEQUENCE_INDEX = "sequenceIndex";
+	private static final String KEY_TOTAL_LENGTH = "totalLength";
+	private static final String KEY_PLAYER_POSITION = "playerPosition";
+	private static final String KEY_GAME_MODE = "gameMode";
+	private static final String KEY_WIN_TONE_INDEX = "winToneIndex";
+	private static final String KEY_IS_LIT = "isLit";
+	private static final String KEY_BEEP_DURATION = "beepDuration";
+	private static final String KEY_HEARD_BUTTON_PRESS = "heardButtonPress";
+	private static final String KEY_PAUSE_DURATION = "pauseDuration";
+	private static final String KEY_ACTIVE_COLORS = "activeColors";
+	private static final String KEY_CURRENT_SEQUENCE = "currentSequence";
 	
 	private boolean[] activeColors = new boolean [4];
 	private int[] longestSequence = new int[32];
@@ -116,6 +138,54 @@ public final class SimonClone {
 		
 	}
 	
+	public Bundle saveState(Bundle map) {
+		if (map != null) {
+			map.putInt(KEY_THE_GAME, Integer.valueOf(theGame));
+			map.putInt(KEY_LONGEST_LENGTH, Integer.valueOf(longestLength));
+			map.putInt(KEY_SEQUENCE_LENGTH, Integer.valueOf(sequenceLength));
+			map.putInt(KEY_SEQUENCE_INDEX, Integer.valueOf(sequenceIndex));
+			map.putInt(KEY_TOTAL_LENGTH, Integer.valueOf(totalLength));
+			map.putInt(KEY_PLAYER_POSITION, Integer.valueOf(playerPosition));
+			map.putInt(KEY_GAME_MODE, Integer.valueOf(gameMode));
+			map.putInt(KEY_WIN_TONE_INDEX, Integer.valueOf(winToneIndex));
+			map.putBoolean(KEY_IS_LIT, Boolean.valueOf(isLit));
+			map.putLong(KEY_BEEP_DURATION, Long.valueOf(beepDuration));
+			map.putBoolean(KEY_HEARD_BUTTON_PRESS, Boolean.valueOf(heardButtonPress));
+			map.putLong(KEY_PAUSE_DURATION, Long.valueOf(pauseDuration));
+			map.putBooleanArray(KEY_ACTIVE_COLORS, activeColors);
+			map.putString(KEY_CURRENT_SEQUENCE, parseSequenceToString(currentSequence, sequenceLength));
+			map.putString(KEY_LONGEST_SEQUENCE, parseSequenceToString(longestSequence, longestLength));		
+			Log.d(TAG, "Saved state.");
+		}
+		return map;
+	}
+	
+	public void restoreState(Bundle map) {
+		gameMode = PAUSED;  // Inhibit any action until we're fully restored.
+		
+		/* Extract the items also kept as preferences. */
+		setGame(map.getInt(KEY_THE_GAME));
+		setLevel(map.getInt(KEY_GAME_LEVEL));
+		setLongest(map.getString(KEY_LONGEST_SEQUENCE));
+		
+		/* Extract the rest. */
+		sequenceLength = map.getInt(KEY_SEQUENCE_LENGTH);
+		sequenceIndex = map.getInt(KEY_SEQUENCE_INDEX);
+		totalLength = map.getInt(KEY_TOTAL_LENGTH);
+		playerPosition = map.getInt(KEY_PLAYER_POSITION);
+		winToneIndex = map.getInt(KEY_WIN_TONE_INDEX);
+		beepDuration = map.getLong(KEY_BEEP_DURATION);
+		pauseDuration = map.getLong(KEY_PAUSE_DURATION);
+		activeColors = map.getBooleanArray(KEY_ACTIVE_COLORS);
+		currentSequence = map.getIntArray(KEY_CURRENT_SEQUENCE);
+		longestSequence = map.getIntArray(KEY_LONGEST_SEQUENCE);			
+		heardButtonPress = map.getBoolean(KEY_HEARD_BUTTON_PRESS);
+		isLit = map.getBoolean(KEY_IS_LIT);
+		mLastUpdate = System.currentTimeMillis();		// Reset the clock.
+		gameMode = map.getInt(KEY_GAME_MODE);			// Let the game proceed!
+		Log.d(TAG, "Restored state.");
+	}
+	
 	void scaleBeepDuration (int index) {
 		if (index < 6 ) beepDuration = 420;		 // 1 to 5 is .42s
 		else if (index < 14) beepDuration = 320; // 6 to 13 is .32s
@@ -144,20 +214,27 @@ public final class SimonClone {
 		}
 	}
 	
+	public int getLevel () {
+		if (totalLength <= 8) return 1;
+		else if (totalLength <= 14) return 2;
+		else if (totalLength <= 20) return 3;
+		else return 4;
+	}
+	
 	public void setLevel(int level) {
 		int savedTotalLength = totalLength;
 		
 		switch (level) {
-		case 0:
+		case 1:
 			totalLength = 8;
 			break;
-		case 1:
+		case 2:
 			totalLength = 14;
 			break;
-		case 2:
+		case 3:
 			totalLength = 20;
 			break;
-		case 3:
+		case 4:
 			totalLength = 30;
 			break;
 		default:
@@ -176,6 +253,41 @@ public final class SimonClone {
 	
 	public void setGame(int level) {
 		theGame = level;
+	}
+	
+	public int getGame() {
+		return theGame;
+	}
+	
+	public void setLongest(String sequence) {
+		longestLength = sequence.length(); 	// Just fine if string is empty.
+		longestSequence = parseSequenceAsString(sequence);
+	}
+	
+	public void setCurrent(String sequence) {
+		sequenceLength = sequence.length(); 	// Just fine if string is empty.
+		currentSequence = parseSequenceAsString(sequence);
+		
+	}
+	
+	public String getLongest() {
+		return parseSequenceToString(longestSequence, longestLength);
+	}
+	
+	private int[] parseSequenceAsString(String longest) {
+		int[] retval = new int[32];
+		for (int i = 0; i < longest.length(); i++) {
+			retval[i] = Integer.parseInt(Character.toString(longest.charAt(i)));
+		}
+		return retval;
+	}
+	
+	private String parseSequenceToString(int[] array, int length) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < length; i++) {
+			sb.append(array[i]);
+		}
+		return sb.toString();
 	}
 	
 	public void gameSetTimeout() {
