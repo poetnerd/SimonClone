@@ -82,7 +82,7 @@ public class SimonCloneActivity extends Activity {
         /* Change the default vol control of app to what is SHOULD be. */
         this.setVolumeControlStream(AudioManager.STREAM_MUSIC);  
         
-        // After all initialization, we set up our save/restore InstanceState Bundle.
+        /* After all initialization, we set up our save/restore InstanceState Bundle. */
         if (savedInstanceState == null) {		// Just launched.  Set initial state.
         	Log.d(TAG, "Initializing");
         	SharedPreferences settings = getPreferences (0); // Private mode by default.
@@ -92,6 +92,8 @@ public class SimonCloneActivity extends Activity {
         	levelDisplay.setText(String.valueOf(model.getLevel()));
         	gameDisplay.setText(String.valueOf(model.getGame()));
         } else {
+        	/* If I understand the activity cycle, I can put this here and not override
+        	 * onRestoreInstanceState */
         	model.restoreState(savedInstanceState);
         }
     }

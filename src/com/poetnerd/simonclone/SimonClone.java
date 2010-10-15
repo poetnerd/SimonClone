@@ -27,6 +27,15 @@ public final class SimonClone {
 	private static final String TAG = "Simon Clone Class";
 	
 	private static final boolean DISABLE_TIMEOUT = false;
+	
+	/* Ideally we pause between lighting or beeping for 50ms or 20ms, but the system tick 
+	 * is observed to be 100ms.  To conform to people's intuition of how long things should be
+	 * we shorten the isLit time of buttons by the difference between the delay we want between
+	 * lit lights, and what we can actually get from the system tick. */
+	private static final int TICK_DURATION = 100;
+	private static final int BETWEEN_DURATION = 50;
+	private static final int TICK_COMPENSATION =
+			BETWEEN_DURATION < TICK_DURATION ? TICK_DURATION - BETWEEN_DURATION : 0;
 		
 	/* Classes of messages to handle through our Handler. */
 	
@@ -118,43 +127,38 @@ public final class SimonClone {
 		soundIds[LOSE_SOUND] = soundPool.load(context, R.raw.lose, 1);
 		soundIds[SPECIAL_RAZZ] = soundPool.load(context, R.raw.special_razz, 1);
 
-		longestLength = 0;
-		sequenceLength = 0;
-		sequenceIndex = 0;
-		totalLength = 8;  // Level 1 by default.
-		playerPosition = 1;
-		scaleBeepDuration (1);
+		/* Do any initialization that needs to be done before calling gameStart(), 
+		 * playLast() or playLongest(). */
+		
+		longestLength = 0;	// Superfluous? Should be initialized by preferences stuff in Activity now.
+		sequenceLength = 0;	// Superfluous? Should be initialized by preferences stuff in Activity now.
 		mLastUpdate = System.currentTimeMillis();
 		gameMode = IDLE;
 		isLit = false;
 		heardButtonPress = false;
 		pauseDuration = 0;
 		winToneIndex = 0;
-		theGame = 1;
-		
-		for (int i = 0; i < 4; i++)  {
-			activeColors[i] = true;			// Mark all colors active.
-		}
-		
 	}
 	
 	public Bundle saveState(Bundle map) {
 		if (map != null) {
 			map.putInt(KEY_THE_GAME, Integer.valueOf(theGame));
-			map.putInt(KEY_LONGEST_LENGTH, Integer.valueOf(longestLength));
-			map.putInt(KEY_SEQUENCE_LENGTH, Integer.valueOf(sequenceLength));
+			map.putInt(KEY_GAME_LEVEL, Integer.valueOf(getLevel()));
+			map.putString(KEY_LONGEST_SEQUENCE, parseSequenceToString(longestSequence, longestLength));		
+			
+			map.putString(KEY_CURRENT_SEQUENCE, parseSequenceToString(currentSequence, sequenceLength));
 			map.putInt(KEY_SEQUENCE_INDEX, Integer.valueOf(sequenceIndex));
 			map.putInt(KEY_TOTAL_LENGTH, Integer.valueOf(totalLength));
 			map.putInt(KEY_PLAYER_POSITION, Integer.valueOf(playerPosition));
-			map.putInt(KEY_GAME_MODE, Integer.valueOf(gameMode));
+			
 			map.putInt(KEY_WIN_TONE_INDEX, Integer.valueOf(winToneIndex));
-			map.putBoolean(KEY_IS_LIT, Boolean.valueOf(isLit));
 			map.putLong(KEY_BEEP_DURATION, Long.valueOf(beepDuration));
-			map.putBoolean(KEY_HEARD_BUTTON_PRESS, Boolean.valueOf(heardButtonPress));
 			map.putLong(KEY_PAUSE_DURATION, Long.valueOf(pauseDuration));
+			
 			map.putBooleanArray(KEY_ACTIVE_COLORS, activeColors);
-			map.putString(KEY_CURRENT_SEQUENCE, parseSequenceToString(currentSequence, sequenceLength));
-			map.putString(KEY_LONGEST_SEQUENCE, parseSequenceToString(longestSequence, longestLength));		
+			map.putBoolean(KEY_IS_LIT, Boolean.valueOf(isLit));
+			map.putBoolean(KEY_HEARD_BUTTON_PRESS, Boolean.valueOf(heardButtonPress));
+			map.putInt(KEY_GAME_MODE, Integer.valueOf(gameMode));
 			Log.d(TAG, "Saved state.");
 		}
 		return map;
@@ -169,27 +173,44 @@ public final class SimonClone {
 		setLongest(map.getString(KEY_LONGEST_SEQUENCE));
 		
 		/* Extract the rest. */
-		sequenceLength = map.getInt(KEY_SEQUENCE_LENGTH);
+		setCurrent(map.getString(KEY_CURRENT_SEQUENCE));
 		sequenceIndex = map.getInt(KEY_SEQUENCE_INDEX);
 		totalLength = map.getInt(KEY_TOTAL_LENGTH);
 		playerPosition = map.getInt(KEY_PLAYER_POSITION);
+		
 		winToneIndex = map.getInt(KEY_WIN_TONE_INDEX);
 		beepDuration = map.getLong(KEY_BEEP_DURATION);
 		pauseDuration = map.getLong(KEY_PAUSE_DURATION);
+		
 		activeColors = map.getBooleanArray(KEY_ACTIVE_COLORS);
-		currentSequence = map.getIntArray(KEY_CURRENT_SEQUENCE);
-		longestSequence = map.getIntArray(KEY_LONGEST_SEQUENCE);			
-		heardButtonPress = map.getBoolean(KEY_HEARD_BUTTON_PRESS);
 		isLit = map.getBoolean(KEY_IS_LIT);
 		mLastUpdate = System.currentTimeMillis();		// Reset the clock.
+		heardButtonPress = map.getBoolean(KEY_HEARD_BUTTON_PRESS);
 		gameMode = map.getInt(KEY_GAME_MODE);			// Let the game proceed!
 		Log.d(TAG, "Restored state.");
 	}
 	
+	/*
+	 * scaleBeepDuration
+	 * 
+	 * Set how long to play each tone.
+	 * According to Simon Inns reverse engineering of the Simon, the beep durations are:
+	 * 
+	 * .42 seconds for sequence lengths 1 to 5,
+	 * .32 seconds for 6 to 13 and
+	 * .22 seconds for 14 to 31, all with .05 seconds between tones.
+	 * 
+	 * The problem is that the finest granularity of time for event handling,
+	 * the system TICK_DURATION seems to be .1 seconds.
+	 * (IE subtract 50 ms, so that the between tone of .05 s, that ends up being .1 s.
+	 * doesn't screw us up.
+	 */
 	void scaleBeepDuration (int index) {
-		if (index < 6 ) beepDuration = 420;		 // 1 to 5 is .42s
+		if (index < 6 ) beepDuration = 420;		 // 1 to 5 is .42s 
 		else if (index < 14) beepDuration = 320; // 6 to 13 is .32s
 		else beepDuration = 220;				// 14 to 31 is .22s
+		beepDuration -= TICK_COMPENSATION;
+		if (beepDuration < 0) beepDuration = 0;  // I don't know what negative values would do.
 	}
 	
 	private UpdateHandler mUpdateHandler = new UpdateHandler();
@@ -303,11 +324,18 @@ public final class SimonClone {
 	public void update() {
 		long now = System.currentTimeMillis();
 		long delay = beepDuration;	// Events are normally the length of a beep.
-		if (isLit) delay = 50;   // Usually delay 50ms after turning off a lit light.
+		if (isLit) delay = BETWEEN_DURATION;   // Usually delay 50ms after turning off a lit light.
+								 // Except that our tick seems to be 100ms, so this doesn't really work
+								 // as we would hope.  So we compensate.
 		if (gameMode == WINNING) {  // Special delays when playing winning tone sequence.
+			
 			if (winToneIndex == 0) delay = 20; // First beep duration is .02 s.
-			else delay = 70;		// Subsequent beeps are .07 s.
+			else delay = BETWEEN_DURATION + 20;		// Subsequent beeps are .07 s.
+													//If BETWEEN_DURATION changes, change this.
 			if (isLit) delay = 20;	// and delay .02 s. between tones.
+			delay -= TICK_COMPENSATION;
+			if (delay < 0) delay = 0;  // I don't know what negative values would do.
+			
 		}
 		if (pauseDuration > 0) delay = pauseDuration; // Long delays should only happen when light is off.
 
@@ -358,6 +386,7 @@ public final class SimonClone {
 				showButtonPress(longestSequence[sequenceIndex]);	// Flash and beep current.
 				isLit = true;
 			} else {											// Played all
+				scaleBeepDuration(sequenceLength);			// Restore to normal value.
 				gameMode = IDLE;
 			}
 			break;
@@ -405,6 +434,7 @@ public final class SimonClone {
 		case LOST:
 			gameMode = LONG_PLAYING;
 			sequenceIndex = 0;
+			scaleBeepDuration(longestLength);
 			update();
 			break;
 		default:
