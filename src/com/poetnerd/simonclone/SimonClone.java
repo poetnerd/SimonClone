@@ -333,8 +333,6 @@ public final class SimonClone {
 			else delay = BETWEEN_DURATION + 20;		// Subsequent beeps are .07 s.
 													//If BETWEEN_DURATION changes, change this.
 			if (isLit) delay = 20;	// and delay .02 s. between tones.
-			delay -= TICK_COMPENSATION;
-			if (delay < 0) delay = 0;  // I don't know what negative values would do.
 			
 		}
 		if (pauseDuration > 0) delay = pauseDuration; // Long delays should only happen when light is off.
