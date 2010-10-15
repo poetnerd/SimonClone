@@ -111,8 +111,8 @@ public class SimonCloneActivity extends Activity {
     }
     
     @Override
-    protected void onStop () {
-    	super.onStop();
+    protected void onPause () {
+    	super.onPause();
     	SharedPreferences settings = getPreferences (0); // Private mode by default.
     	SharedPreferences.Editor editor = settings.edit();
     	
