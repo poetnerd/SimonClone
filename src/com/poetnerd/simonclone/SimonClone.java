@@ -26,7 +26,11 @@ public final class SimonClone {
 	
 	private static final String TAG = "Simon Clone Class";
 	
+	/* Test modes -- enable them by setting true. */
+	
 	private static final boolean DISABLE_TIMEOUT = false;
+	private static final boolean TEST_RAZZ = false;
+	private static final boolean SHORT_GAME = false;
 	
 	/* Ideally we pause between lighting or beeping for 50ms or 20ms, but the system tick 
 	 * is observed to be 100ms.  To conform to people's intuition of how long things should be
@@ -36,6 +40,10 @@ public final class SimonClone {
 	private static final int BETWEEN_DURATION = 50;
 	private static final int TICK_COMPENSATION =
 			BETWEEN_DURATION < TICK_DURATION ? TICK_DURATION - BETWEEN_DURATION : 0;
+	private static final int RAZZ_DURATION = 
+			(TICK_COMPENSATION < 100 ) ? 100 - TICK_COMPENSATION : 20;
+	private static final int RAZZ_COMPENSATION =
+			RAZZ_DURATION < TICK_DURATION ? TICK_DURATION - BETWEEN_DURATION : 0;
 		
 	/* Classes of messages to handle through our Handler. */
 	
@@ -50,10 +58,11 @@ public final class SimonClone {
 	private static final int REPLAYING = 3;
 	private static final int LONG_PLAYING = 4;
 	private static final int WINNING = 5;
-	private static final int WON = 6;
-	private static final int LOSING = 7;
-	private static final int LOST = 8;
-	private static final int PAUSED = 9;
+	private static final int RAZZING = 6;
+	private static final int WON = 7;
+	private static final int LOSING = 8;
+	private static final int LOST = 9;
+	private static final int PAUSED = 10;
 	
 	/* Names for the sounds we make */
 	
@@ -70,13 +79,12 @@ public final class SimonClone {
 	public static final String KEY_GAME_LEVEL = "gameLevel";
 	public static final String KEY_LONGEST_SEQUENCE = "longestSequence";
 	
-	private static final String KEY_LONGEST_LENGTH = "longestLength";
-	private static final String KEY_SEQUENCE_LENGTH = "sequenceLength";
 	private static final String KEY_SEQUENCE_INDEX = "sequenceIndex";
 	private static final String KEY_TOTAL_LENGTH = "totalLength";
 	private static final String KEY_PLAYER_POSITION = "playerPosition";
 	private static final String KEY_GAME_MODE = "gameMode";
 	private static final String KEY_WIN_TONE_INDEX = "winToneIndex";
+	private static final String KEY_RAZ_TONE_INDEX = "razToneIndex";
 	private static final String KEY_IS_LIT = "isLit";
 	private static final String KEY_BEEP_DURATION = "beepDuration";
 	private static final String KEY_HEARD_BUTTON_PRESS = "heardButtonPress";
@@ -87,6 +95,7 @@ public final class SimonClone {
 	private boolean[] activeColors = new boolean [4];
 	private int[] longestSequence = new int[32];
 	private int[] currentSequence = new int[32];
+	private int[] razzSequence = {RED, YELLOW, BLUE, GREEN, GREEN, GREEN, GREEN, RED, YELLOW, LOSE_SOUND };
 	
 	private int longestLength;
 	private int sequenceLength;
@@ -97,6 +106,7 @@ public final class SimonClone {
 	private long mLastUpdate;
 	private int gameMode;
 	private int winToneIndex;
+	private int razToneIndex;
 	private int theGame;
 	
 	private static final Random RNG = new Random();
@@ -138,6 +148,7 @@ public final class SimonClone {
 		heardButtonPress = false;
 		pauseDuration = 0;
 		winToneIndex = 0;
+		razToneIndex = 0;
 	}
 	
 	public Bundle saveState(Bundle map) {
@@ -152,6 +163,7 @@ public final class SimonClone {
 			map.putInt(KEY_PLAYER_POSITION, Integer.valueOf(playerPosition));
 			
 			map.putInt(KEY_WIN_TONE_INDEX, Integer.valueOf(winToneIndex));
+			map.putInt(KEY_RAZ_TONE_INDEX, Integer.valueOf(razToneIndex));
 			map.putLong(KEY_BEEP_DURATION, Long.valueOf(beepDuration));
 			map.putLong(KEY_PAUSE_DURATION, Long.valueOf(pauseDuration));
 			
@@ -179,6 +191,7 @@ public final class SimonClone {
 		playerPosition = map.getInt(KEY_PLAYER_POSITION);
 		
 		winToneIndex = map.getInt(KEY_WIN_TONE_INDEX);
+		razToneIndex = map.getInt(KEY_RAZ_TONE_INDEX);
 		beepDuration = map.getLong(KEY_BEEP_DURATION);
 		pauseDuration = map.getLong(KEY_PAUSE_DURATION);
 		
@@ -328,14 +341,23 @@ public final class SimonClone {
 								 // Except that our tick seems to be 100ms, so this doesn't really work
 								 // as we would hope.  So we compensate.
 		if (gameMode == WINNING) {  // Special delays when playing winning tone sequence.
-			
 			if (winToneIndex == 0) delay = 20; // First beep duration is .02 s.
 			else delay = BETWEEN_DURATION + 20;		// Subsequent beeps are .07 s.
 													//If BETWEEN_DURATION changes, change this.
 			if (isLit) delay = 20;	// and delay .02 s. between tones.
 			
 		}
-		if (pauseDuration > 0) delay = pauseDuration; // Long delays should only happen when light is off.
+		if (gameMode == RAZZING) {  // Special delays when playing winning tone sequence.
+			if (razToneIndex == 0) delay = BETWEEN_DURATION; // First beep duration is .05 s.
+			else delay = RAZZ_DURATION;		// Subsequent beeps are .1 s.
+			delay -= RAZZ_COMPENSATION;
+			if (delay < 0) delay = 0;  // I don't know what negative values would do.
+													
+			if (isLit) delay = BETWEEN_DURATION;	// and delay .05 s. between tones.			
+		}
+		/* We rely on the update routine to do no state changing on a pause, to set pauseDuration to 0
+		 * and return here to continue doing what we were otherwise going to do. */
+		if (pauseDuration > 0) delay = pauseDuration;
 
 		if (gameMode != LISTENING) {
 			if (now - mLastUpdate > delay) {
@@ -399,6 +421,18 @@ public final class SimonClone {
 				winToneIndex++;
 			}
 			break;
+		case RAZZING:
+			if (isLit) {
+				showButtonRelease(razzSequence[razToneIndex]);
+				isLit = false;
+				if (razToneIndex == 9) gameLose();  // Kludge: Light nothing and play lose tone.
+				razToneIndex++;
+			} else {
+				showButtonPress(razzSequence[razToneIndex]);
+				isLit = true;
+			}
+			break;
+
 		case LOSING:
 			gameMode = LOST;
 			break;
@@ -452,7 +486,9 @@ public final class SimonClone {
 		for (int i = 0; i < 4; i++)  {
 			activeColors[i] = true;			// Mark all colors active.
 		}
+		if (SHORT_GAME) totalLength = 3;  // Temporary Test: crowbar win to 3 steps.
 		winToneIndex = 0;
+		razToneIndex = 0;
 		sequenceLength = 1;
 		scaleBeepDuration (1);
 		playerPosition = 1;
@@ -482,9 +518,18 @@ public final class SimonClone {
 		mLastUpdate = System.currentTimeMillis();
 		pauseDuration = 800;		// We play the winning tone .8 s. after win.
 		gameMode = WINNING;
+		if (TEST_RAZZ) gameMode = RAZZING;		// Make razz tone the win tone on test.
+		update();
+	}
+
+	public void razzWin() {
+		mLastUpdate = System.currentTimeMillis();
+		pauseDuration = 800;		// We play the winning tone .8 s. after win.
+		gameMode = RAZZING;
 		update();
 	}
 	
+
 	public void gameTimeoutLose () {
 		if (theGame == 3)  {
 			activeColors[currentSequence[sequenceIndex]] = false;
@@ -583,6 +628,9 @@ public final class SimonClone {
 					else
 						doStream(soundIds[LOSE_SOUND]);
 					break;
+				case RAZZING:
+					if (razToneIndex < 9) doStream(soundIds[index]);
+					break;
 				default: 
 					doStream(soundIds[index]);
 					break;
@@ -624,7 +672,8 @@ public final class SimonClone {
 							gameCycle();
 						}
 					} else {  // Total win!
-						gameWin();
+						if (theGame == 3 && sequenceLength == 31) razzWin ();
+						else gameWin();
 					}					
 				} else {
 					playerPosition++;
