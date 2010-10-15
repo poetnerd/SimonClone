@@ -11,6 +11,18 @@ import android.view.MotionEvent;
 import android.view.View;
 
 /*
+* By William D. Cattey
+* 
+* This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
+* To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/ 
+* or send a letter to Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA.
+* 
+* Summary of terms: may use this code for non-commercial purposes, and you may make changes, but you must 
+* attribute the source, and you must share the source under these same terms.
+*/
+
+
+/*
  * This ButtonGridView comes from a Tutorial by Ivan Memruk appearing on his blog, "Mind the Robot."
  * See: "Android BeatzL: Making a Drum Machine App"
  * at: http://mindtherobot.com/blog/420/android-beatz-making-a-drum-machine-app/
