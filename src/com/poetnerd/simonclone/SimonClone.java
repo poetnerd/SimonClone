@@ -7,7 +7,7 @@ package com.poetnerd.simonclone;
  * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/ 
  * or send a letter to Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA.
  * 
- * Summary of terms: may use this code for non-commercial purposes, and you may make changes, but you must 
+ * Summary of terms: you may use this code for non-commercial purposes, and you may make changes, but you must 
  * attribute the source, and you must share the source under these same terms.
  */
 
@@ -18,7 +18,6 @@ import java.util.Random;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 
 import android.content.Context;
 
@@ -182,7 +181,6 @@ public final class SimonClone {
 			map.putBoolean(KEY_IS_LIT, Boolean.valueOf(isLit));
 			map.putBoolean(KEY_HEARD_BUTTON_PRESS, Boolean.valueOf(heardButtonPress));
 			map.putInt(KEY_GAME_MODE, Integer.valueOf(gameMode));
-			Log.d(TAG, "Saved state.");
 		}
 		return map;
 	}
@@ -211,7 +209,6 @@ public final class SimonClone {
 		mLastUpdate = System.currentTimeMillis();		// Reset the clock.
 		heardButtonPress = map.getBoolean(KEY_HEARD_BUTTON_PRESS);
 		gameMode = map.getInt(KEY_GAME_MODE);			// Let the game proceed!
-		Log.d(TAG, "Restored state.");
 	}
 	
 	/*
@@ -544,8 +541,6 @@ public final class SimonClone {
 	public void gameTimeoutLose () {
 		if (theGame == 3)  {
 			activeColors[currentSequence[sequenceIndex]] = false;
-			Log.d(TAG, "SequenceIndex: " + sequenceIndex + " Eliminating active color: " + 
-					currentSequence[sequenceIndex]);
 		}
 		gameLose();
 	}
@@ -554,7 +549,6 @@ public final class SimonClone {
 		if (theGame == 3) {   // In game 3 we eliminate a color and start again.
 			int activeColorCount = 0;
 			for (int i=0; i < 4; i++) {
-				Log.d(TAG, "activeColor[" + i + "] is: " + activeColors[i]);
 				if (activeColors[i]) activeColorCount++;
 			}
 			if (activeColorCount == 1) gameWin();
@@ -604,7 +598,6 @@ public final class SimonClone {
 			gameClearTimeout();					// showButton Press would have done this for us.
 			doStream(soundIds[LOSE_SOUND]);
 			if (theGame == 3) {		// Eliminate color that was pressed in game 3.
-				Log.d(TAG, "Eliminating active color: " + buttonIndex);
 				activeColors[buttonIndex] = false;
 			}
 			gameLose();
@@ -691,7 +684,6 @@ public final class SimonClone {
 				}
 			} else {
 				if (theGame == 3) {		// Eliminate color that was pressed in game 3.
-					Log.d(TAG, "Eliminating active color: " + buttonIndex);
 					activeColors[buttonIndex] = false;
 				}
 				gameLose ();

@@ -17,7 +17,7 @@ import android.view.View;
 * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/ 
 * or send a letter to Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA.
 * 
-* Summary of terms: may use this code for non-commercial purposes, and you may make changes, but you must 
+* Summary of terms: you may use this code for non-commercial purposes, and you may make changes, but you must 
 * attribute the source, and you must share the source under these same terms.
 */
 

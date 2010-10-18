@@ -5,7 +5,7 @@
  * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/ 
  * or send a letter to Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA.
  * 
- * Summary of terms: may use this code for non-commercial purposes, and you may make changes, but you must 
+ * Summary of terms: you may use this code for non-commercial purposes, and you may make changes, but you must 
  * attribute the source, and you must share the source under these same terms.
  */
 
@@ -17,8 +17,6 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 
 import android.os.Bundle;
-
-import android.util.Log;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -32,7 +30,6 @@ import android.view.View.OnClickListener;
 
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import android.content.DialogInterface;
 
@@ -95,7 +92,6 @@ public class SimonCloneActivity extends Activity {
         
         /* After all initialization, we set up our save/restore InstanceState Bundle. */
         if (savedInstanceState == null) {		// Just launched.  Set initial state.
-        	Log.d(TAG, "Initializing");
         	SharedPreferences settings = getPreferences (0); // Private mode by default.
         	model.setLevel(settings.getInt(SimonClone.KEY_GAME_LEVEL, 1));	// Game Level
         	model.setGame(settings.getInt(SimonClone.KEY_THE_GAME, 1)); 	// The Game

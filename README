@@ -1,0 +1,51 @@
+This is a clone of the Milton Bradley children's game of 1978: Simon.
+
+I wrote it as a learning exercise because it offered many challenges:
+    Complex user interface involving sound synchronized with display and user action.
+    Attention to the passage of time for a correct rendition of the user experience.
+    Complex game action.
+    Underlying simple game concept easily appreciated by a user.
+    
+I was able to build on some extremely good work by others:
+
+The ButtonGridView that gives the interface its four color buttons for the game
+comes from a Tutorial by Ivan Memruk appearing on his blog, "Mind the Robot."
+See: "Android BeatzL: Making a Drum Machine App"
+at: http://mindtherobot.com/blog/420/android-beatz-making-a-drum-machine-app/
+
+Although I initially wrote a RelativeLayout grid of buttons, I wasn't getting the behavior
+I wanted.  Ivan points out that one view behaving as a grid of buttons works a lot better
+for things like musical instruments because the events land where you want them, not in
+the wrong button (fixed in Froyo but...).
+
+The beautiful button bitmaps are derived from the graphics Rich Dellinger did in photoshop for the
+Simon Extreme program for the Mac.  (I cut apart the .psd image file he gave as an example.)
+That work is licensed under Creative Commons Non Commercial Share Alike:
+http://creativecommons.org/licenses/by-nc-sa/1.0-legalcode
+The source and binaries are supposed to be available from http://lumacode.com/simon
+but that domain name is dead.  I fetched it via the Internet Archive http://web.archive.org
+Rich's home page is still active at http://richd.com
+
+I was able to achieve the extremely accurate mimic of the Simon game behavior because of the
+meticulously detailed reverse engineering done by Simon Inns documented on his website at:
+http://www.waitingforfriday.com/index.php/Reverse_engineering_an_MB_Electronic_Simon_game
+
+The game itself, its design, layout, action and name are properly credited to
+Milton Bradley / Hasbro which owns the game, and to the genius of Ralph Baer who conceived of
+and implemented the game.  See: http://www.dieterkoenig.at/ccc/english/se_story_simon.htm
+
+The Simon name is a registered trademark of the Milton Bradley Hasbro Corporation.
+
+The game is covered by US Patent 4207087, issued 10 June 1980.
+See: http://v3.espacenet.com/textdoc?DB=EPODOC&IDX=US4207087
+
+Copyright William D. Cattey
+Some rights reserved.
+
+This work, the source code and executable binary is licensed under the 
+Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
+To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/ 
+or send a letter to Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA.
+ 
+Summary of terms: you may use this code for non-commercial purposes, and you may make changes, but you must 
+attribute the source, and you must share the source under these same terms.
