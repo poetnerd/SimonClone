@@ -42,12 +42,14 @@ public class SimonCloneActivity extends Activity {
 	private static final int LEVEL_DIALOG = 1;
 	private static final int GAME_DIALOG = 2;
 	private static final int ABOUT_DIALOG = 3;
+	private static final int HELP_DIALOG = 4;
 	
 	private SimonClone model;
 	private Menu mMenu;
 	private AlertDialog levelDialog;
 	private AlertDialog gameDialog;
 	private AlertDialog aboutDialog;
+	private AlertDialog helpDialog;
 	private TextView levelDisplay;
 	private TextView gameDisplay;
 	
@@ -179,6 +181,17 @@ public class SimonCloneActivity extends Activity {
             });
             aboutDialog = builder.create();
             return aboutDialog;
+    	case HELP_DIALOG:
+    		builder = new AlertDialog.Builder(this);
+    		builder.setTitle(R.string.help);
+    		builder.setMessage(R.string.long_help);
+            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+                	helpDialog.dismiss();
+                }
+            });
+            helpDialog = builder.create();
+            return helpDialog;
     	default: return null;
     	}
     }
@@ -195,8 +208,13 @@ public class SimonCloneActivity extends Activity {
         	return true;
         case R.id.about:
         	showDialog(ABOUT_DIALOG);
+        	return true;
+        case R.id.help:
+        	showDialog(HELP_DIALOG);
+        	return true;
         case R.id.clear_longest:
         	model.setLongest("");
+        	return true;
         }
         return false;
     }

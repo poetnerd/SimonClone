@@ -458,6 +458,12 @@ public final class SimonClone {
 		case IDLE:
 		case WON:
 		case LOST:
+			
+			/* In case user was fast on the draw: Reset all buttons. */
+			for (int index = 0; index < 4; index++) {  
+				showButtonRelease(index);
+			}
+			
 			gameMode = REPLAYING;
 			sequenceIndex = 0;
 			update();
@@ -472,6 +478,12 @@ public final class SimonClone {
 		case IDLE:
 		case WON:
 		case LOST:
+			
+			/* In case user was fast on the draw: Reset all buttons. */
+			for (int index = 0; index < 4; index++) {  
+				showButtonRelease(index);
+			}
+			
 			gameMode = LONG_PLAYING;
 			sequenceIndex = 0;
 			scaleBeepDuration(longestLength);
@@ -494,6 +506,12 @@ public final class SimonClone {
 		for (int i = 0; i < 4; i++)  {
 			activeColors[i] = true;			// Mark all colors active.
 		}
+		
+		/* In case user was fast on the draw: Reset all buttons. */
+		for (int index = 0; index < 4; index++) {  
+			showButtonRelease(index);
+		}
+		
 		if (SHORT_GAME) totalLength = 3;  // Temporary Test: crowbar win to 3 steps.
 		winToneIndex = 0;
 		razToneIndex = 0;
@@ -504,15 +522,6 @@ public final class SimonClone {
 		playCurrent();
 	}
 
-	public void gameTest() {
-		for (int i = 0; i < 6; i++) {
-			currentSequence[i] = RNG.nextInt(4);
-		}
-		sequenceLength = 6;
-		scaleBeepDuration (sequenceLength);
-		playCurrent();
-	}
-	
 	public void maintainLongest () {
 		if (sequenceLength > longestLength) {
 			for (int i = 0; i < sequenceLength; i++) {

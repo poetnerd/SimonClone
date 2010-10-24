@@ -48,6 +48,25 @@ or send a letter to Creative Commons, 171 Second Street, Suite 300, San Francisc
 Summary of terms: you may use this code for non-commercial purposes, and you may make changes, but you must 
 attribute the source, and you must share the source under these same terms.\n\n
 </string>
+<string name="help">Help</string>   
+<string name="long_help">
+SimonClone has 4 skill levels.\nEach level determines the length of the final sequence.\n\n
+Level 1: Remember 8.\n
+Level 2: Remember 14.\n
+Level 3: Remember 20.\n
+Level 4: Remember 31.\n\n
+SimonClone has three games:\n\n
+Game 1: Single Player: Repeat the sequence of colors that SimonClone gives.\n
+Faithfully repeat each sequence all the way to the final one for the level and you win!\n\n
+Game 2: Multi Player: SimonClone picks a color to start the game.\n
+Each player in turn repeats the sequence and picks a new color to extend the sequence.\n
+A player who fails to repeat the sequence is out and SimonClone starts again.\n
+Last player in, wins!\n\n
+Game 3: Multi Player: Each player picks a color to &quot;own&quot;.\n
+Repeat the sequence given by SimonClone as in Game 1. Each player presses their owned color.\n
+If you press your color at the wrong time, you are out and SimonClone starts again without your color.\n
+Last player in, wins!\n\n.
+</string>
     <string-array name="level_choices">
         <item>Level 1: Remember 8</item>
         <item>Level 2: Remember 14</item>
